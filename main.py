@@ -121,13 +121,11 @@ class GeminiLiveDemo:
                         # Handle transcriptions only
                         if response.server_content.input_transcription:
                             user_text += response.server_content.input_transcription.text
-                            print(f"👤 You: {user_text.strip()}")
                             
                         if response.server_content.model_turn:
                             for part in response.server_content.model_turn.parts:
                                 if part.text:
                                     ai_text += part.text
-                                    print(f"🤖 AI: {ai_text.strip()}")
 
                         if response.server_content.interrupted is True:
                             logger.info("🔄 Response interrupted, waiting for next turn...")

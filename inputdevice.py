@@ -24,7 +24,7 @@ DTYPE = 'float32'
 
 
 class AudioInputDevice:
-    def __init__(self, input_device_index=None, save_recording=False):
+    def __init__(self, input_device_index=0, save_recording=False):
         """
         Initialize audio input device
         
