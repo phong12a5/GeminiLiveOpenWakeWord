@@ -83,7 +83,7 @@ class AudioInputDevice:
         if self.is_recording:
             # Put in queue for streaming
             if not self.audio_queue.full():
-                self.audio_queue.put(indata.copy())
+                self.audio_queue.put(indata.flatten())
             
             # Save to buffer nếu cần
             if self.save_recording:
