@@ -118,7 +118,7 @@ if __name__ == "__main__":
                 file_name += '.wav'
             
             # Bạn có thể thay đổi tần số lấy mẫu nếu muốn, 44100Hz là tiêu chuẩn CD
-            record_audio_stream(filename=file_name, device=selected_device, samplerate=16000, blocksize=512)
+            record_audio_stream(filename=file_name, device=selected_device, samplerate=48000, blocksize=512)
     except KeyboardInterrupt:
         print("\nĐã hủy bởi người dùng.")
         sys.exit(0)

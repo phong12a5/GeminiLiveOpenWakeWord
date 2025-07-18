@@ -6,7 +6,7 @@ import numpy as np
 from inputdevice import AudioInputDevice
 
 # Setup logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -46,7 +46,7 @@ class WakeWordDetector:
         """Initialize openwakeword model"""
         try:
             # Download models if needed
-            openwakeword.utils.download_models()
+            # openwakeword.utils.download_models()
             
             # Initialize model
             self.model = Model(wakeword_models=self.wakeword_models, inference_framework=self.inference_framework)
