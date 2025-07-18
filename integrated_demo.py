@@ -15,13 +15,13 @@ from inputdevice import AudioInputDevice
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
 # Configuration
-DEFAUL_DEVICE_INDEX = 1
+DEFAUL_DEVICE_INDEX = 0
 WAKEWORD_TIMEOUT = 10  # seconds
 
 class IntegratedDemo:
@@ -42,14 +42,14 @@ class IntegratedDemo:
         # Create shared AudioInputDevice for both wakeword and Gemini
         self.audio_device = AudioInputDevice(
             input_device_index=input_device_index,
-            save_recording=False  # Don't save recordings for this demo
+            save_recording=True  # Don't save recordings for this demo
         )
         
         # Wakeword setup using shared AudioInputDevice
         self.wakeword_detector = WakeWordDetector(
             # wakeword_models=["hey_jarvis"],
-            #  wakeword_models=["hey_kai.tflite"],
-             wakeword_models=["alexa"],
+            #  wakeword_models=["hey_lisa.tflite"], inference_framework='tflite',
+            wakeword_models=["hey_lisa.onnx"], inference_framework='onnx',  # Sử dụng ONNX cho hiệu suất tốt
             audio_device=self.audio_device,  # Share the same AudioInputDevice
             threshold=0.5
         )
@@ -98,7 +98,6 @@ class IntegratedDemo:
     
     async def wakeword_detection_loop(self):
         """Wakeword detection loop using shared AudioInputDevice"""
-        logger.info("👂 Wakeword detection started - say 'hey jarvis'")
         
         # AudioInputDevice is already started by start_audio_stream()
         # WakeWordDetector will use the shared AudioInputDevice
@@ -114,6 +113,7 @@ class IntegratedDemo:
                             logger.info(f"🔥 Wakeword detected: {wakeword} (confidence: {confidence:.3f})")
                             # Switch to Gemini mode
                             await self.switch_to_gemini_mode()
+                            self.wakeword_detector.clear()
                             break
                     
                 except Exception as e:
@@ -297,9 +297,7 @@ class IntegratedDemo:
                 asyncio.create_task(self.wakeword_detection_loop()),
                 asyncio.create_task(self.timeout_monitor_loop()),
             ]
-            
-            logger.info("🎤 Ready! Say 'hey jarvis' to start...")
-            
+                        
             # Run until interrupted
             await asyncio.gather(*tasks, return_exceptions=True)
             

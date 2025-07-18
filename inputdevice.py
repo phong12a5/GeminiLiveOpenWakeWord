@@ -12,12 +12,13 @@ import os
 from datetime import datetime
 import threading
 import time
+from scipy import signal
 
 # Setup logging
 logger = logging.getLogger(__name__)
 
 # Audio config
-SAMPLE_RATE = 16000  # Standard for speech recognition
+SAMPLE_RATE = 48000
 CHANNELS = 1
 CHUNK_SIZE = 1024
 DTYPE = 'float32'
@@ -106,7 +107,8 @@ class AudioInputDevice:
                     dtype=DTYPE,
                     device=self.input_device_index,
                     blocksize=CHUNK_SIZE,
-                    callback=self.audio_callback
+                    callback=self.audio_callback,
+                    latency='low'  # Yêu cầu latency thấp
                 )
             except Exception as stream_error:
                 logger.warning(f"⚠️ Failed with specified device, trying default: {stream_error}")
@@ -115,7 +117,8 @@ class AudioInputDevice:
                     channels=CHANNELS,
                     dtype=DTYPE,
                     blocksize=CHUNK_SIZE,
-                    callback=self.audio_callback
+                    callback=self.audio_callback,
+                    latency='low'
                 )
             
             self.is_recording = True
@@ -164,7 +167,11 @@ class AudioInputDevice:
         """
         try:
             if not self.audio_queue.empty():
-                return self.audio_queue.get_nowait()
+                frame = self.audio_queue.get_nowait()
+                if SAMPLE_RATE == 16000:
+                    return frame
+                
+                return self.resample_audio(input=frame, orig_sr=SAMPLE_RATE, target_sr=16000, dtype='float32') if frame is not None else None
             return None
         except queue.Empty:
             return None
@@ -201,6 +208,11 @@ class AudioInputDevice:
                 self.audio_queue.get_nowait()
             except queue.Empty:
                 break
+
+    def resample_audio(self, input : np.ndarray, orig_sr: int, target_sr: int, dtype: str = "float32") -> np.ndarray:
+        if orig_sr == target_sr:
+            return input
+        return signal.resample(input, len(input) * target_sr // orig_sr).astype(dtype)
     
     def __enter__(self):
         """Context manager support"""

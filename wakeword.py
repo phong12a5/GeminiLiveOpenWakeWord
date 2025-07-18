@@ -6,7 +6,7 @@ import numpy as np
 from inputdevice import AudioInputDevice
 
 # Setup logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
@@ -16,7 +16,7 @@ class WakeWordDetector:
     Uses AudioInputDevice for audio handling
     """
     
-    def __init__(self, wakeword_models=None, audio_device=None, threshold=0.5):
+    def __init__(self, wakeword_models=None, inference_framework='tflite', audio_device=None, threshold=0.5):
         """
         Initialize WakeWord Detector
         
@@ -26,6 +26,7 @@ class WakeWordDetector:
             threshold: Detection confidence threshold (0.0 - 1.0)
         """
         self.wakeword_models = wakeword_models or ["hey_jarvis"]
+        self.inference_framework = inference_framework
         self.threshold = threshold
         
         # Audio setup - use provided AudioInputDevice or create new one
@@ -48,7 +49,7 @@ class WakeWordDetector:
             openwakeword.utils.download_models()
             
             # Initialize model
-            self.model = Model(wakeword_models=self.wakeword_models)
+            self.model = Model(wakeword_models=self.wakeword_models, inference_framework=self.inference_framework)
             logger.info("✅ Wakeword model loaded successfully")
             
         except Exception as e:
@@ -97,8 +98,10 @@ class WakeWordDetector:
             detections = {}
             for wakeword in prediction:
                 confidence = prediction[wakeword]
+                logger.debug(f"Wakeword '{wakeword}' confidence: {confidence:.3f}")
                 if confidence > self.threshold:
                     detections[wakeword] = confidence
+                    self.audio_device.clear_queue()
                     self.model.reset()
             
             return detections if detections else None
@@ -124,6 +127,9 @@ class WakeWordDetector:
         logger.info(f"👂 Listening for wakewords: {self.wakeword_models}")
         
         try:
+            self.audio_device.clear_queue()
+            self.model.reset()
+        
             while self.audio_device.is_recording:
                 detections = self.detect_wakeword()
                 
@@ -147,6 +153,12 @@ class WakeWordDetector:
                 self.stop_listening()
         
         return None
+    
+    def clear(self):
+        """Clear audio queue and reset model"""
+        self.audio_device.clear_queue()
+        self.model.reset()
+        logger.info("🔄 Audio queue cleared and model reset")
     
     def __enter__(self):
         """Context manager support"""
